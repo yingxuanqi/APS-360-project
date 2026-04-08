@@ -127,8 +127,6 @@ class CNN4(nn.Module):
         self.conv2 = nn.Conv2d(16, 32, kernel_size=3, padding=1)
         self.pool = nn.MaxPool2d(2, 2)
 
-        # conv2+pool 后是 [B,32,56,56]
-        # 去掉边缘 4:-4 后 -> [B,32,48,48]
         self.fc1 = nn.Linear(32 * 48 * 48, 128)
         self.fc2 = nn.Linear(128, 2)
 
@@ -136,7 +134,6 @@ class CNN4(nn.Module):
         x = self.pool(F.relu(self.conv1(x)))   # 224 -> 112
         x = self.pool(F.relu(self.conv2(x)))   # 112 -> 56
 
-        # 去掉 feature map 四周边缘
         x = x[:, :, 4:-4, 4:-4]                # 56 -> 48
 
         x = torch.flatten(x, 1)
