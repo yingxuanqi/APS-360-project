@@ -2,9 +2,7 @@ import random
 import shutil
 from pathlib import Path
 
-# =========================
-# 1. 路径设置
-# =========================
+
 SOURCE_ROOT = Path(r"C:\Users\qiyin\supervised\Agriculture-Vision-2021\train")
 
 TARGET_ROOT_1 = Path(r"C:\Users\qiyin\OneDrive\Documents\Desktop\APS360\dataset\val")
@@ -28,9 +26,7 @@ LABEL_CLASSES = [
     "weed_cluster"
 ]
 
-# =========================
-# 2. 原始目录
-# =========================
+
 rgb_dir = SOURCE_ROOT / "images" / "rgb"
 nir_dir = SOURCE_ROOT / "images" / "nir"
 boundaries_dir = SOURCE_ROOT / "boundaries"
@@ -44,9 +40,7 @@ print("nir_dir exists:", nir_dir.exists())
 print("boundaries_dir exists:", boundaries_dir.exists())
 print("labels_root exists:", labels_root.exists())
 
-# =========================
-# 3. 找所有 RGB 图片
-# =========================
+
 rgb_files = sorted(list(rgb_dir.glob("*.jpg")) + list(rgb_dir.glob("*.png")))
 
 if len(rgb_files) == 0:
@@ -59,9 +53,7 @@ if len(rgb_files) < total_needed:
 print(f"找到 RGB 图片总数: {len(rgb_files)}")
 print(f"需要抽取总数: {total_needed}")
 
-# =========================
-# 4. 一次性无重复抽样
-# =========================
+
 random.seed(SEED)
 all_selected = random.sample(rgb_files, total_needed)
 
@@ -69,13 +61,11 @@ subset1 = all_selected[:N1]                 # val
 subset2 = all_selected[N1:N1 + N2]         # train
 subset3 = all_selected[N1 + N2:N1 + N2 + N3]  # test
 
-print(f"val 数量:   {len(subset1)}")
-print(f"train 数量: {len(subset2)}")
-print(f"test 数量:  {len(subset3)}")
+print(f"val :   {len(subset1)}")
+print(f"train: {len(subset2)}")
+print(f"test:  {len(subset3)}")
 
-# =========================
-# 5. 工具函数
-# =========================
+
 def copy_if_exists(src: Path, dst: Path):
     if src.exists():
         shutil.copy2(src, dst)
@@ -138,14 +128,12 @@ def copy_sample_group(sample_list, target_root: Path, group_name="group"):
         copied_count += 1
 
         if copied_count % 200 == 0:
-            print(f"{group_name}: 已完成 {copied_count}/{len(sample_list)}")
+            print(f"{group_name}: completed {copied_count}/{len(sample_list)}")
 
-    print(f"{group_name} 复制完成，共 {copied_count} 组样本")
-    print(f"保存位置: {target_root}")
+    print(f"{group_name} 复制完成， {copied_count} ")
+    print(f"savepath: {target_root}")
 
-# =========================
-# 6. 开始复制
-# =========================
+
 copy_sample_group(subset1, TARGET_ROOT_1, "val")
 copy_sample_group(subset2, TARGET_ROOT_2, "train")
 copy_sample_group(subset3, TARGET_ROOT_3, "test")
