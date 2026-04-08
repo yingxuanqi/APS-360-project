@@ -31,7 +31,7 @@ for rgb_path in rgb_files:
         if mask_path.exists():
             mask = np.array(Image.open(mask_path))
 
-            # 只要这个mask里有非零像素，就说明有异常
+
             if np.any(mask > 0):
                 abnormal = 1
                 break
@@ -43,7 +43,7 @@ with open(output_csv, "w", newline="", encoding="utf-8") as f:
     writer.writerow(["filename", "label"])
     writer.writerows(rows)
 
-print(f"labels.csv 已生成: {output_csv}")
-print(f"总样本数: {len(rows)}")
-print(f"abnormal 数量: {sum(r[1] for r in rows)}")
-print(f"normal 数量: {len(rows) - sum(r[1] for r in rows)}")
+print(f"labels.csv generated: {output_csv}")
+print(f"total: {len(rows)}")
+print(f"abnormal: {sum(r[1] for r in rows)}")
+print(f"normal: {len(rows) - sum(r[1] for r in rows)}")
