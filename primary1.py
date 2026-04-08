@@ -108,30 +108,28 @@ test_loader = DataLoader(test_dataset, batch_size=BATCH_SIZE, shuffle=False)
 # =========================
 # 5. Model
 # =========================
-class CNN(nn.Module):
+class CNN4(nn.Module):
+
     def __init__(self):
         super().__init__()
 
-        # 输入从 4 通道改成 3 通道
-        self.conv1 = nn.Conv2d(3, 16, 3, padding=1)
-        self.conv2 = nn.Conv2d(16, 32, 3, padding=1)
+        self.conv1 = nn.Conv2d(4, 16, 3, padding=1)   # 4 channels now
         self.pool = nn.MaxPool2d(2, 2)
 
-        # 224 -> 112 -> 56
-        # 之后 crop 4:-4 => 56 -> 48
-        self.fc1 = nn.Linear(32 * 48 * 48, 128)
+        self.conv2 = nn.Conv2d(16, 32, 3, padding=1)
+
+        self.fc1 = nn.Linear(32 * 56 * 56, 128)
         self.fc2 = nn.Linear(128, 2)
 
     def forward(self, x):
-        x = self.pool(F.relu(self.conv1(x)))   # [B,16,112,112]
-        x = self.pool(F.relu(self.conv2(x)))   # [B,32,56,56]
+        x = self.pool(F.relu(self.conv1(x)))
+        x = self.pool(F.relu(self.conv2(x)))
 
-        # 去掉边缘一圈
-        x = x[:, :, 4:-4, 4:-4]                # [B,32,48,48]
+        x = x.view(x.size(0), -1)
 
-        x = torch.flatten(x, 1)
         x = F.relu(self.fc1(x))
         x = self.fc2(x)
+
         return x
 
 
@@ -407,10 +405,6 @@ if __name__ == "__main__":
     print("Val size:", len(val_dataset))
     print("Test size:", len(test_dataset))
 
-    # 先检查 dataset 输出
-    img, label, name = train_dataset[0]
-    print("Loaded sample:", name, label.item(), img.shape)   # 应该是 [3,224,224]
-
     model = CNN().to(DEVICE)
     criterion = nn.CrossEntropyLoss()
     optimizer = optim.Adam(model.parameters(), lr=LEARNING_RATE)
@@ -422,69 +416,69 @@ if __name__ == "__main__":
 
     best_val_acc = 0.0
 
-    # # -------- Training --------
-    # for epoch in range(NUM_EPOCHS):
-    #     train_loss = train_one_epoch(model, train_loader, criterion, optimizer, DEVICE, epoch)
-    #     val_loss = evaluate_loss(model, val_loader, criterion, DEVICE)
+    ##Training
+    for epoch in range(NUM_EPOCHS):
+         train_loss = train_one_epoch(model, train_loader, criterion, optimizer, DEVICE, epoch)
+         val_loss = evaluate_loss(model, val_loader, criterion, DEVICE)
 
-    #     train_acc = get_accuracy(model, train_loader, DEVICE)
-    #     val_acc = get_accuracy(model, val_loader, DEVICE)
+        train_acc = get_accuracy(model, train_loader, DEVICE)
+        val_acc = get_accuracy(model, val_loader, DEVICE)
 
-    #     train_loss_list.append(train_loss)
-    #     val_loss_list.append(val_loss)
-    #     train_acc_list.append(train_acc)
-    #     val_acc_list.append(val_acc)
+        train_loss_list.append(train_loss)
+        val_loss_list.append(val_loss)
+        train_acc_list.append(train_acc)
+        val_acc_list.append(val_acc)
 
-    #     print(f"\nEpoch {epoch + 1}/{NUM_EPOCHS}")
-    #     print(f"Train Loss: {train_loss:.4f}")
-    #     print(f"Val Loss:   {val_loss:.4f}")
-    #     print(f"Train Acc:  {train_acc:.4f}")
-    #     print(f"Val Acc:    {val_acc:.4f}")
+        print(f"\nEpoch {epoch + 1}/{NUM_EPOCHS}")
+        print(f"Train Loss: {train_loss:.4f}")
+        print(f"Val Loss:   {val_loss:.4f}")
+        print(f"Train Acc:  {train_acc:.4f}")
+        print(f"Val Acc:    {val_acc:.4f}")
 
-    #     if val_acc > best_val_acc:
-    #         best_val_acc = val_acc
-    #         torch.save(model.state_dict(), MODEL_PATH)
-    #         print("Best model saved.")
+        if val_acc > best_val_acc:
+            best_val_acc = val_acc
+            torch.save(model.state_dict(), MODEL_PATH)
+            print("Best model saved.")
 
-    # # -------- Plot learning curves --------
-    # epochs = range(1, NUM_EPOCHS + 1)
+    #Plot learning curves
+    epochs = range(1, NUM_EPOCHS + 1)
 
-    # plt.figure(figsize=(12, 5))
+    plt.figure(figsize=(12, 5))
 
-    # plt.subplot(1, 2, 1)
-    # plt.plot(epochs, train_loss_list, label="Train Loss")
-    # plt.plot(epochs, val_loss_list, label="Val Loss")
-    # plt.xlabel("Epoch")
-    # plt.ylabel("Loss")
-    # plt.title("Loss Curve")
-    # plt.legend()
+    plt.subplot(1, 2, 1)
+    plt.plot(epochs, train_loss_list, label="Train Loss")
+    plt.plot(epochs, val_loss_list, label="Val Loss")
+    plt.xlabel("Epoch")
+    plt.ylabel("Loss")
+    plt.title("Loss Curve")
+    plt.legend()
 
-    # plt.subplot(1, 2, 2)
-    # plt.plot(epochs, train_acc_list, label="Train Acc")
-    # plt.plot(epochs, val_acc_list, label="Val Acc")
-    # plt.xlabel("Epoch")
-    # plt.ylabel("Accuracy")
-    # plt.title("Accuracy Curve")
-    # plt.legend()
+    plt.subplot(1, 2, 2)
+    plt.plot(epochs, train_acc_list, label="Train Acc")
+    plt.plot(epochs, val_acc_list, label="Val Acc")
+    plt.xlabel("Epoch")
+    plt.ylabel("Accuracy")
+    plt.title("Accuracy Curve")
+    plt.legend()
 
-    # plt.tight_layout()
-    # plt.show()
+    plt.tight_layout()
+    plt.show()
 
-    # -------- Load best model --------
+    #Load best model
     print("\nLoading best model...")
     best_model = CNN().to(DEVICE)
     best_model.load_state_dict(torch.load(MODEL_PATH, map_location=DEVICE))
     best_model.eval()
 
-    # -------- Test accuracy --------
+    # Test accuracy
     evaluate_test_accuracy(best_model, test_loader, DEVICE)
 
-    # -------- Suggest useful samples --------
+    #Suggest useful samples
     print("\nSome label=1 samples:", find_samples_by_label(val_dataset, 1, max_count=10))
     print("Some correct abnormal samples:", find_correct_abnormal_samples(best_model, val_dataset, max_count=10))
     print("Some wrong samples:", find_wrong_samples(best_model, val_dataset, max_count=10))
 
-    # -------- Example Grad-CAM visualization --------
+    #Example Grad-CAM visualization
     example_indices = find_correct_abnormal_samples(best_model, val_dataset, max_count=10)
 
     if len(example_indices) == 0:
